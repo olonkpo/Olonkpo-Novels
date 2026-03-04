@@ -5,6 +5,7 @@ export interface Project {
   synopsis: string;
   outline: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Chapter {
@@ -12,7 +13,10 @@ export interface Chapter {
   project_id: number;
   title: string;
   content: string;
+  beats: string;
   order_index: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CodexEntry {
@@ -22,6 +26,8 @@ export interface CodexEntry {
   name: string;
   description: string;
   content: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Setting {

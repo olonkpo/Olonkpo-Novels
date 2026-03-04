@@ -17,7 +17,8 @@ db.exec(`
     description TEXT,
     synopsis TEXT,
     outline TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
   CREATE TABLE IF NOT EXISTS chapters (
@@ -25,7 +26,10 @@ db.exec(`
     project_id INTEGER,
     title TEXT NOT NULL,
     content TEXT,
+    beats TEXT,
     order_index INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(project_id) REFERENCES projects(id)
   );
 
@@ -36,6 +40,8 @@ db.exec(`
     name TEXT NOT NULL,
     description TEXT,
     content TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(project_id) REFERENCES projects(id)
   );
 
@@ -65,7 +71,14 @@ async function startServer() {
 
   app.put("/api/projects/:id", (req, res) => {
     const { name, description, synopsis, outline } = req.body;
-    db.prepare("UPDATE projects SET name = ?, description = ?, synopsis = ?, outline = ? WHERE id = ?").run(name, description, synopsis, outline, req.params.id);
+    db.prepare("UPDATE projects SET name = ?, description = ?, synopsis = ?, outline = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(name, description, synopsis, outline, req.params.id);
+    res.json({ success: true });
+  });
+
+  app.delete("/api/projects/:id", (req, res) => {
+    db.prepare("DELETE FROM chapters WHERE project_id = ?").run(req.params.id);
+    db.prepare("DELETE FROM codex_entries WHERE project_id = ?").run(req.params.id);
+    db.prepare("DELETE FROM projects WHERE id = ?").run(req.params.id);
     res.json({ success: true });
   });
 
@@ -75,14 +88,19 @@ async function startServer() {
   });
 
   app.post("/api/projects/:id/chapters", (req, res) => {
-    const { title, content, order_index } = req.body;
-    const result = db.prepare("INSERT INTO chapters (project_id, title, content, order_index) VALUES (?, ?, ?, ?)").run(req.params.id, title, content, order_index);
+    const { title, content, beats, order_index } = req.body;
+    const result = db.prepare("INSERT INTO chapters (project_id, title, content, beats, order_index) VALUES (?, ?, ?, ?, ?)").run(req.params.id, title, content, beats, order_index);
     res.json({ id: result.lastInsertRowid });
   });
 
   app.put("/api/chapters/:id", (req, res) => {
-    const { title, content } = req.body;
-    db.prepare("UPDATE chapters SET title = ?, content = ? WHERE id = ?").run(title, content, req.params.id);
+    const { title, content, beats } = req.body;
+    db.prepare("UPDATE chapters SET title = ?, content = ?, beats = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(title, content, beats, req.params.id);
+    res.json({ success: true });
+  });
+
+  app.delete("/api/chapters/:id", (req, res) => {
+    db.prepare("DELETE FROM chapters WHERE id = ?").run(req.params.id);
     res.json({ success: true });
   });
 
@@ -99,7 +117,12 @@ async function startServer() {
 
   app.put("/api/codex/:id", (req, res) => {
     const { name, description, content } = req.body;
-    db.prepare("UPDATE codex_entries SET name = ?, description = ?, content = ? WHERE id = ?").run(name, description, content, req.params.id);
+    db.prepare("UPDATE codex_entries SET name = ?, description = ?, content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(name, description, content, req.params.id);
+    res.json({ success: true });
+  });
+
+  app.delete("/api/codex/:id", (req, res) => {
+    db.prepare("DELETE FROM codex_entries WHERE id = ?").run(req.params.id);
     res.json({ success: true });
   });
 
